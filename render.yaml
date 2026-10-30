@@ -1,0 +1,55 @@
+envVarGroups:
+  - name: habeshabingo-shared
+    envVars:
+      - key: BOT_SERVER_API_KEY
+        generateValue: true
+      - key: PAYMENT_SMS_API_KEY
+        generateValue: true
+
+services:
+  - type: web
+    name: zbingo
+    runtime: node
+    region: frankfurt
+    plan: starter
+    buildCommand: npm ci && npm run build:admin
+    startCommand: npm start
+    healthCheckPath: /health
+    disk:
+      name: habeshabingo-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - fromGroup: habeshabingo-shared
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /var/data
+      - key: WEBAPP_URL
+        value: https://zbingo.onrender.com
+      - key: TELEGRAM_BOT_USERNAME
+        value: zbingo111_bot
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: APP_GATE_PASSWORD
+        sync: false
+
+  - type: worker
+    name: zbingo-bot
+    runtime: node
+    region: frankfurt
+    plan: starter
+    buildCommand: npm ci
+    startCommand: npm run bot
+    envVars:
+      - fromGroup: habeshabingo-shared
+      - key: NODE_ENV
+        value: production
+      - key: WEBAPP_URL
+        value: https://zbingo.onrender.com
+      - key: SERVER_API_URL
+        value: https://zbingo.onrender.com
+      - key: TELEGRAM_BOT_USERNAME
+        value: zbingo111_bot
